@@ -8,6 +8,7 @@
 #include "Render/Proxy/ParticleSystemSceneProxy.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialManager.h"
+#include "Core/ProjectSettings.h"
 
 #include <cstring>
 
@@ -278,6 +279,8 @@ void UParticleSystemComponent::TickComponent(
         FParticleEmitterInstance* Instance = EmitterInstances[EmitterIndex];
         if (Instance)
         {
+			Instance->bUpdateLoopPrefetch = FProjectSettings::Get().Particle.bUpdateLoopPrefetch;
+
 			if (Instance->SpriteTemplate)
 			{
 				int32 MaxLODCount = static_cast<int32>(Instance->SpriteTemplate->GetLODLevels().size());

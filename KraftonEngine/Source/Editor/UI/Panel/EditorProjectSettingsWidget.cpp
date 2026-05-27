@@ -99,6 +99,11 @@ void EditorProjectSettingsWidget::Render()
 		ImGui::TextDisabled("Requires scene reload to take effect.");
 	}
 
+	if (ImGui::CollapsingHeader("Particle", ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		ImGui::Checkbox("Update Loop Prefetch", &PS.Particle.bUpdateLoopPrefetch);
+	}
+
 	if (ImGui::CollapsingHeader("Shadow", ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		ImGui::Checkbox("Shadows", &PS.Shadow.bEnabled);

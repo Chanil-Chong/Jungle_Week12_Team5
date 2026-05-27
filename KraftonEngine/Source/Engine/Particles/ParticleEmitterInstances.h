@@ -72,6 +72,7 @@ struct FParticleEmitterInstance
     bool bFakeBurstsWhenSpawningSupressed = false;
     bool bEmitterIsDone = false;
 	bool bUseParticlePrefetch = false;
+	bool bUpdateLoopPrefetch = false;
 
     int32 SortMode = 0;
 

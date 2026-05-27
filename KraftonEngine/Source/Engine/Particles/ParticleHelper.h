@@ -9,9 +9,25 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <xmmintrin.h>
 
 #ifndef INDEX_NONE
 #define INDEX_NONE -1
+#endif
+
+#ifndef PARTICLE_PREFETCH_ADDRESS
+#define PARTICLE_PREFETCH_ADDRESS(Address) \
+	_mm_prefetch(reinterpret_cast<const char*>(Address), _MM_HINT_T0)
+#endif
+
+#ifndef PARTICLE_PREFETCH_OFFSET
+#define PARTICLE_PREFETCH_OFFSET(Base, Offset) \
+	PARTICLE_PREFETCH_ADDRESS(reinterpret_cast<const uint8*>(Base) + (Offset))
+#endif
+
+#ifndef PARTICLE_INSTANCE_PREFETCH
+#define PARTICLE_INSTANCE_PREFETCH(Instance, Index) \
+	PARTICLE_PREFETCH_OFFSET((Instance)->ParticleData, (Instance)->ParticleStride * (Instance)->ParticleIndices[Index])
 #endif
 
 enum EParticleStates : uint32
@@ -367,6 +383,11 @@ struct FParticleDataContainer
     uint16* ParticleIndices = Context.Owner.ParticleIndices;                   \
     for (int32 i = ActiveParticles - 1; i >= 0; --i)                           \
     {                                                                         \
+        if (Context.bUpdateLoopPrefetch && i > 0)                              \
+        {                                                                     \
+            const int32 PrefetchIndex = ParticleIndices[i - 1];                \
+            PARTICLE_PREFETCH_OFFSET(ParticleData, PrefetchIndex * ParticleStride); \
+        }                                                                     \
         const int32 CurrentIndex = ParticleIndices[i];                         \
         uint8* ParticleBase = ParticleData + CurrentIndex * ParticleStride;    \
         FBaseParticle& Particle = *reinterpret_cast<FBaseParticle*>(ParticleBase); \

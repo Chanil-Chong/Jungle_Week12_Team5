@@ -39,10 +39,17 @@ class FProjectSettings : public TSingleton<FProjectSettings>
 		                            // 잘못된 이름이거나 AGameModeBase 파생이 아니면 디폴트 fallback.
 	};
 
+	// --- Particle ---
+	struct FParticleOption
+	{
+		bool bUpdateLoopPrefetch = false;
+	};
+
 public:
 	FShadowOption Shadow;
 	FPhysicsOption Physics;
 	FGameOption Game;
+	FParticleOption Particle;
 
 	// --- 직렬화 ---
 	void SaveToFile(const FString& Path) const;

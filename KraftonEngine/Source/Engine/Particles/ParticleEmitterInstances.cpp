@@ -620,7 +620,7 @@ void FParticleEmitterInstance::Tick_ModuleUpdate(float DeltaTime, UParticleLODLe
 		UParticleModule* CurrentModule = InCurrentLODLevel->UpdateModules[ModuleIndex];
 		if (CurrentModule && CurrentModule->bEnabled && CurrentModule->bUpdateModule)
 		{
-			CurrentModule->Update({ *this, (int32)GetModuleDataOffset(HighestLODLevel->UpdateModules[ModuleIndex]), DeltaTime });
+			CurrentModule->Update({ *this, (int32)GetModuleDataOffset(HighestLODLevel->UpdateModules[ModuleIndex]), DeltaTime, bUpdateLoopPrefetch });
 		}
 	}
 }
@@ -633,7 +633,7 @@ void FParticleEmitterInstance::Tick_ModulePostUpdate(float DeltaTime, UParticleL
 	// Handle the TypeData module
 	if (InCurrentLODLevel->TypeDataModule)
 	{
-		InCurrentLODLevel->TypeDataModule->Update({ *this, TypeDataOffset, DeltaTime });
+		InCurrentLODLevel->TypeDataModule->Update({ *this, TypeDataOffset, DeltaTime, bUpdateLoopPrefetch });
 	}
 }
 
@@ -648,13 +648,13 @@ void FParticleEmitterInstance::Tick_ModuleFinalUpdate(float DeltaTime, UParticle
 		UParticleModule* CurrentModule = InCurrentLODLevel->UpdateModules[ModuleIndex];
 		if (CurrentModule && CurrentModule->bEnabled && CurrentModule->bFinalUpdateModule)
 		{
-			CurrentModule->FinalUpdate({ *this, (int32)GetModuleDataOffset(HighestLODLevel->UpdateModules[ModuleIndex]), DeltaTime });
+			CurrentModule->FinalUpdate({ *this, (int32)GetModuleDataOffset(HighestLODLevel->UpdateModules[ModuleIndex]), DeltaTime, bUpdateLoopPrefetch });
 		}
 	}
 
 	if (InCurrentLODLevel->TypeDataModule && InCurrentLODLevel->TypeDataModule->bEnabled && InCurrentLODLevel->TypeDataModule->bFinalUpdateModule)
 	{
-		InCurrentLODLevel->TypeDataModule->FinalUpdate({ *this, (int32)GetModuleDataOffset(HighestLODLevel->TypeDataModule), DeltaTime });
+		InCurrentLODLevel->TypeDataModule->FinalUpdate({ *this, (int32)GetModuleDataOffset(HighestLODLevel->TypeDataModule), DeltaTime, bUpdateLoopPrefetch });
 	}
 }
 
@@ -1441,14 +1441,7 @@ void FParticleEmitterInstance::ParticlePrefetch()
 {
 	for (int32 ParticleIndex = 0; ParticleIndex < ActiveParticles; ParticleIndex++)
 	{
-		const std::uintptr_t Address =
-			reinterpret_cast<std::uintptr_t>(this->ParticleData) +
-			static_cast<std::uintptr_t>(this->ParticleStride) *
-			static_cast<std::uintptr_t>(this->ParticleIndices[ParticleIndex]);
-
-		_mm_prefetch(
-			reinterpret_cast<const char*>(Address),
-			_MM_HINT_T0);
+		PARTICLE_INSTANCE_PREFETCH(this, ParticleIndex);
 	}
 }
 
@@ -2919,11 +2912,11 @@ void FParticleBeam2EmitterInstance::PostSpawn(FBaseParticle* Particle, float Int
 
 void FParticleBeam2EmitterInstance::Tick_ModulePostUpdate(float DeltaTime, UParticleLODLevel* CurrentLODLevel)
 {
-	if (BeamModule_Source && BeamModule_Source->bEnabled) BeamModule_Source->Update({ *this, static_cast<int32>(GetModuleDataOffset(BeamModule_Source)), DeltaTime });
-	if (BeamModule_SourceModifier && BeamModule_SourceModifier->bEnabled) BeamModule_SourceModifier->Update({ *this, static_cast<int32>(GetModuleDataOffset(BeamModule_SourceModifier)), DeltaTime });
-	if (BeamModule_Target && BeamModule_Target->bEnabled) BeamModule_Target->Update({ *this, static_cast<int32>(GetModuleDataOffset(BeamModule_Target)), DeltaTime });
-	if (BeamModule_TargetModifier && BeamModule_TargetModifier->bEnabled) BeamModule_TargetModifier->Update({ *this, static_cast<int32>(GetModuleDataOffset(BeamModule_TargetModifier)), DeltaTime });
-	if (BeamModule_Noise && BeamModule_Noise->bEnabled) BeamModule_Noise->Update({ *this, static_cast<int32>(GetModuleDataOffset(BeamModule_Noise)), DeltaTime });
+	if (BeamModule_Source && BeamModule_Source->bEnabled) BeamModule_Source->Update({ *this, static_cast<int32>(GetModuleDataOffset(BeamModule_Source)), DeltaTime, bUpdateLoopPrefetch });
+	if (BeamModule_SourceModifier && BeamModule_SourceModifier->bEnabled) BeamModule_SourceModifier->Update({ *this, static_cast<int32>(GetModuleDataOffset(BeamModule_SourceModifier)), DeltaTime, bUpdateLoopPrefetch });
+	if (BeamModule_Target && BeamModule_Target->bEnabled) BeamModule_Target->Update({ *this, static_cast<int32>(GetModuleDataOffset(BeamModule_Target)), DeltaTime, bUpdateLoopPrefetch });
+	if (BeamModule_TargetModifier && BeamModule_TargetModifier->bEnabled) BeamModule_TargetModifier->Update({ *this, static_cast<int32>(GetModuleDataOffset(BeamModule_TargetModifier)), DeltaTime, bUpdateLoopPrefetch });
+	if (BeamModule_Noise && BeamModule_Noise->bEnabled) BeamModule_Noise->Update({ *this, static_cast<int32>(GetModuleDataOffset(BeamModule_Noise)), DeltaTime, bUpdateLoopPrefetch });
 	FParticleEmitterInstance::Tick_ModulePostUpdate(DeltaTime, CurrentLODLevel);
 }
 

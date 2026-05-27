@@ -89,6 +89,7 @@ public:
 	{
 		int32 Offset;
 		float DeltaTime;
+		bool bUpdateLoopPrefetch;
 		/**
 		 *	Called on a particle that is being updated by its emitter.
 		 *
@@ -96,7 +97,8 @@ public:
 		 *	@param	Offset		The modules offset into the data payload of the particle.
 		 *	@param	DeltaTime	The time since the last update.
 		 */
-		FUpdateContext(FParticleEmitterInstance& Ow, int32 Of, float Dt) : FContext(Ow), Offset(Of), DeltaTime(Dt) {}
+		FUpdateContext(FParticleEmitterInstance& Ow, int32 Of, float Dt, bool bInUpdateLoopPrefetch = false)
+			: FContext(Ow), Offset(Of), DeltaTime(Dt), bUpdateLoopPrefetch(bInUpdateLoopPrefetch) {}
 	};
 
 	virtual void Update(const FUpdateContext& Context);
