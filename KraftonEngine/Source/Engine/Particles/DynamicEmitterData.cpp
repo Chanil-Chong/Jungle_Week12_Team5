@@ -458,14 +458,14 @@ void FDynamicSpriteEmitterDataBase::SortSpriteParticles(const FParticleSortConte
     if (Source.SortMode == PSORTMODE_None) return;
     if (!Source.DataContainer.ParticleIndices || !Source.DataContainer.ParticleData) return;
 
-    const int32 Count = Source.DataContainer.ParticleIndicesNumShorts;
+    const int32 Count = Source.DataContainer.ParticleIndicesNum;
     if (Count <= 1) return;
 
-    uint16* Indices       = Source.DataContainer.ParticleIndices;
+    uint32* Indices       = Source.DataContainer.ParticleIndices;
     const uint8* RawData  = Source.DataContainer.ParticleData;
     const int32 Stride    = Source.ParticleStride;
 
-    auto GetParticle = [&](uint16 Idx) -> const FBaseParticle*
+    auto GetParticle = [&](uint32 Idx) -> const FBaseParticle*
     {
         return reinterpret_cast<const FBaseParticle*>(RawData + Idx * Stride);
     };
@@ -473,7 +473,7 @@ void FDynamicSpriteEmitterDataBase::SortSpriteParticles(const FParticleSortConte
     switch (Source.SortMode)
     {
     case PSORTMODE_DistanceToView:
-        std::sort(Indices, Indices + Count, [&](uint16 A, uint16 B)
+        std::sort(Indices, Indices + Count, [&](uint32 A, uint32 B)
         {
             const float DA = FVector::DistSquared(GetParticle(A)->Location, SortCtx.CameraPosition);
             const float DB = FVector::DistSquared(GetParticle(B)->Location, SortCtx.CameraPosition);
@@ -482,7 +482,7 @@ void FDynamicSpriteEmitterDataBase::SortSpriteParticles(const FParticleSortConte
         break;
 
     case PSORTMODE_ViewProjDepth:
-        std::sort(Indices, Indices + Count, [&](uint16 A, uint16 B)
+        std::sort(Indices, Indices + Count, [&](uint32 A, uint32 B)
         {
             const float DA = (GetParticle(A)->Location - SortCtx.CameraPosition).Dot(SortCtx.CameraForward);
             const float DB = (GetParticle(B)->Location - SortCtx.CameraPosition).Dot(SortCtx.CameraForward);
@@ -491,14 +491,14 @@ void FDynamicSpriteEmitterDataBase::SortSpriteParticles(const FParticleSortConte
         break;
 
     case PSORTMODE_Age_OldestFirst:
-        std::sort(Indices, Indices + Count, [&](uint16 A, uint16 B)
+        std::sort(Indices, Indices + Count, [&](uint32 A, uint32 B)
         {
             return GetParticle(A)->RelativeTime > GetParticle(B)->RelativeTime;
         });
         break;
 
     case PSORTMODE_Age_NewestFirst:
-        std::sort(Indices, Indices + Count, [&](uint16 A, uint16 B)
+        std::sort(Indices, Indices + Count, [&](uint32 A, uint32 B)
         {
             return GetParticle(A)->RelativeTime < GetParticle(B)->RelativeTime;
         });
@@ -928,7 +928,7 @@ int32 FDynamicTrailsEmitterData::FillIndexData()
 	int32 CurrentTrail = 0;
 	for (int32 ActiveIndex = 0; ActiveIndex < Source.ActiveParticleCount; ++ActiveIndex)
 	{
-		const uint16 DirectIndex = Source.DataContainer.ParticleIndices ? Source.DataContainer.ParticleIndices[ActiveIndex] : 0;
+		const uint32 DirectIndex = Source.DataContainer.ParticleIndices ? Source.DataContainer.ParticleIndices[ActiveIndex] : 0;
 		const FBaseParticle* StartParticle = GetReplayParticle(Source, DirectIndex);
 		const FRibbonTypeDataPayload* StartPayload = GetReplayPayload<FRibbonTypeDataPayload>(Source, StartParticle, Source.TrailDataOffset);
 		if (!StartParticle || !StartPayload || !TRAIL_EMITTER_IS_HEAD(StartPayload->Flags))
@@ -1015,7 +1015,7 @@ int32 FDynamicRibbonEmitterData::FillVertexData(const FFrameContext& Frame)
 
 	for (int32 ActiveIndex = 0; ActiveIndex < Source.ActiveParticleCount; ++ActiveIndex)
 	{
-		const uint16 DirectIndex = Source.DataContainer.ParticleIndices ? Source.DataContainer.ParticleIndices[ActiveIndex] : 0;
+		const uint32 DirectIndex = Source.DataContainer.ParticleIndices ? Source.DataContainer.ParticleIndices[ActiveIndex] : 0;
 		const FBaseParticle* PackingParticle = GetReplayParticle(Source, DirectIndex);
 		const FRibbonTypeDataPayload* TrailPayload = GetReplayPayload<FRibbonTypeDataPayload>(Source, PackingParticle, Source.TrailDataOffset);
 		if (!PackingParticle || !TrailPayload || !TRAIL_EMITTER_IS_HEAD(TrailPayload->Flags))

@@ -96,11 +96,6 @@ namespace
 			+ T1 * (A3 - A2);
 	}
 
-	int32 ClampParticleCountToUInt16(int32 Count)
-	{
-		return std::min<int32>(Count, std::numeric_limits<uint16>::max());
-	}
-
 	bool IsReplayType(const FDynamicEmitterReplayDataBase& Data, EDynamicEmitterType ExpectedType)
 	{
 		return Data.eEmitterType == ExpectedType;
@@ -159,7 +154,7 @@ namespace
 		std::memcpy(
 			OutData.DataContainer.ParticleIndices,
 			Instance.ParticleIndices,
-			static_cast<size_t>(Instance.MaxActiveParticles) * sizeof(uint16));
+			static_cast<size_t>(Instance.MaxActiveParticles) * sizeof(uint32));
 	}
 }
 
@@ -310,7 +305,7 @@ void FParticleEmitterInstance::FreeResources()
 	if (ParticleIndices)
 	{
 		const size_t IndexBytes =
-			sizeof(uint16) * static_cast<size_t>(MaxActiveParticles + 1);
+			sizeof(uint32) * static_cast<size_t>(MaxActiveParticles + 1);
 		ParticleMemory::Free(ParticleIndices, IndexBytes);
 		ParticleIndices = nullptr;
 	}
@@ -336,8 +331,6 @@ bool FParticleEmitterInstance::Resize(int32 NewMaxActiveParticles, bool bSetMaxA
 	assert(ParticleStride > 0);
 	assert((ParticleStride % 16) == 0);
 
-	NewMaxActiveParticles = ClampParticleCountToUInt16(NewMaxActiveParticles);
-
 	if (NewMaxActiveParticles <= MaxActiveParticles)
 	{
 		return true;
@@ -357,22 +350,22 @@ bool FParticleEmitterInstance::Resize(int32 NewMaxActiveParticles, bool bSetMaxA
 	assert((reinterpret_cast<uintptr_t>(ParticleData) % 16) == 0);
 
 	const size_t OldIndexBytes =
-		sizeof(uint16) * static_cast<size_t>(OldMaxActiveParticles + 1);
+		sizeof(uint32) * static_cast<size_t>(OldMaxActiveParticles + 1);
 	const size_t NewIndexBytes =
-		sizeof(uint16) * static_cast<size_t>(NewMaxActiveParticles + 1);
+		sizeof(uint32) * static_cast<size_t>(NewMaxActiveParticles + 1);
 
-	ParticleIndices = static_cast<uint16*>(
+	ParticleIndices = static_cast<uint32*>(
 		ParticleMemory::Realloc(ParticleIndices, OldIndexBytes, NewIndexBytes));
 
 	assert(ParticleIndices != nullptr);
 
 	for (int32 i = OldMaxActiveParticles; i < NewMaxActiveParticles; ++i)
 	{
-		ParticleIndices[i] = static_cast<uint16>(i);
+		ParticleIndices[i] = static_cast<uint32>(i);
 	}
 
 	ParticleIndices[NewMaxActiveParticles] =
-		static_cast<uint16>(NewMaxActiveParticles - 1);
+		static_cast<uint32>(NewMaxActiveParticles - 1);
 
 	MaxActiveParticles = NewMaxActiveParticles;
 
@@ -1506,22 +1499,6 @@ float FParticleEmitterInstance::Spawn(float DeltaTime)
 		bool bProcessSpawn = true;
 		int32 NewCount = ActiveParticles + Number + BurstCount;
 
-		const int32 MaxCPUParticlesPerEmitter =
-			std::numeric_limits<uint16>::max();
-
-		if (NewCount > MaxCPUParticlesPerEmitter)
-		{
-			int32 MaxNewParticles =
-				MaxCPUParticlesPerEmitter - ActiveParticles;
-
-			BurstCount = std::min(MaxNewParticles, BurstCount);
-			MaxNewParticles -= BurstCount;
-
-			Number = std::min(MaxNewParticles, Number);
-
-			NewCount = ActiveParticles + Number + BurstCount;
-		}
-
 		const float BurstIncrement =
 			(SpriteTemplate->bUseLegacySpawningBehavior && BurstCount > 0)
 			? (1.0f / static_cast<float>(BurstCount))
@@ -1590,13 +1567,13 @@ void FParticleEmitterInstance::FixupParticleIndices()
 	TArray<uint8> Used;
 	Used.resize(MaxActiveParticles, 0);
 
-	TArray<uint16> NewIndices;
+	TArray<uint32> NewIndices;
 	NewIndices.reserve(MaxActiveParticles + 1);
 
 	for (int32 i = 0; i < ActiveParticles; ++i)
 	{
-		const uint16 Index = ParticleIndices[i];
-		if (Index < MaxActiveParticles && Used[Index] == 0)
+		const uint32 Index = ParticleIndices[i];
+		if (Index < static_cast<uint32>(MaxActiveParticles) && Used[Index] == 0)
 		{
 			Used[Index] = 1;
 			NewIndices.push_back(Index);
@@ -1609,7 +1586,7 @@ void FParticleEmitterInstance::FixupParticleIndices()
 	{
 		if (Used[i] == 0)
 		{
-			NewIndices.push_back(static_cast<uint16>(i));
+			NewIndices.push_back(static_cast<uint32>(i));
 		}
 	}
 
@@ -1618,7 +1595,7 @@ void FParticleEmitterInstance::FixupParticleIndices()
 		ParticleIndices[i] = NewIndices[i];
 	}
 
-	ParticleIndices[MaxActiveParticles] = static_cast<uint16>(MaxActiveParticles - 1);
+	ParticleIndices[MaxActiveParticles] = static_cast<uint32>(MaxActiveParticles - 1);
 }
 
 void FParticleEmitterInstance::SpawnParticles(
@@ -1675,8 +1652,8 @@ void FParticleEmitterInstance::SpawnParticles(
 					break;
 				}
 
-				uint16 NextFreeIndex = ParticleIndices[ActiveParticles];
-				if (NextFreeIndex >= MaxActiveParticles)
+				uint32 NextFreeIndex = ParticleIndices[ActiveParticles];
+				if (NextFreeIndex >= static_cast<uint32>(MaxActiveParticles))
 				{
 					FixupParticleIndices();
 					if (ActiveParticles >= MaxActiveParticles)
@@ -1684,7 +1661,7 @@ void FParticleEmitterInstance::SpawnParticles(
 						break;
 					}
 					NextFreeIndex = ParticleIndices[ActiveParticles];
-					if (NextFreeIndex >= MaxActiveParticles)
+					if (NextFreeIndex >= static_cast<uint32>(MaxActiveParticles))
 					{
 						break;
 					}
@@ -1964,7 +1941,7 @@ void FParticleEmitterInstance::KillParticles()
 		if (Particle.RelativeTime > 1.0f)
 		{
 			ParticleIndices[i] = ParticleIndices[ActiveParticles - 1];
-			ParticleIndices[ActiveParticles - 1] = static_cast<uint16>(CurrentIndex);
+			ParticleIndices[ActiveParticles - 1] = static_cast<uint32>(CurrentIndex);
 			--ActiveParticles;
 		}
 	}
@@ -1982,7 +1959,7 @@ void FParticleEmitterInstance::KillParticle(int32 Index)
 		return;
 	}
 
-	const uint16 KillIndex = ParticleIndices[Index];
+	const uint32 KillIndex = ParticleIndices[Index];
 
 	for (int32 i = Index; i < ActiveParticles - 1; ++i)
 	{
@@ -2009,12 +1986,12 @@ void FParticleEmitterInstance::KillParticlesForced(bool bFireEvents)
 
 	for (int32 i = 0; i < MaxActiveParticles; ++i)
 	{
-		ParticleIndices[i] = static_cast<uint16>(i);
+		ParticleIndices[i] = static_cast<uint32>(i);
 	}
 
 	if (MaxActiveParticles > 0)
 	{
-		ParticleIndices[MaxActiveParticles] = static_cast<uint16>(MaxActiveParticles - 1);
+		ParticleIndices[MaxActiveParticles] = static_cast<uint32>(MaxActiveParticles - 1);
 	}
 
 	ParticleCounter = 0;
@@ -3539,7 +3516,7 @@ void FParticleTrailsEmitterInstance_Base::KillParticles()
 		TrailData->Flags = TRAIL_EMITTER_SET_NEXT(TrailData->Flags, TRAIL_EMITTER_NULL_NEXT);
 		TrailData->Flags = TRAIL_EMITTER_SET_PREV(TrailData->Flags, TRAIL_EMITTER_NULL_PREV);
 		ParticleIndices[ParticleIdx] = ParticleIndices[ActiveParticles - 1];
-		ParticleIndices[ActiveParticles - 1] = static_cast<uint16>(CurrentIndex);
+		ParticleIndices[ActiveParticles - 1] = static_cast<uint32>(CurrentIndex);
 		--ActiveParticles;
 		SetDeadIndex(TrailData->TrailIndex, CurrentIndex);
 	}

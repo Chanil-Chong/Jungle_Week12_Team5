@@ -340,10 +340,10 @@ struct FParticleDataContainer
 {
 	int32 MemBlockSize = 0;
 	int32 ParticleDataNumBytes = 0;
-	int32 ParticleIndicesNumShorts = 0;
+	int32 ParticleIndicesNum = 0;
 
 	uint8* ParticleData = nullptr;
-	uint16* ParticleIndices = nullptr;
+	uint32* ParticleIndices = nullptr;
 
 	FParticleDataContainer() = default;
 	~FParticleDataContainer();
@@ -354,7 +354,7 @@ struct FParticleDataContainer
 	FParticleDataContainer(FParticleDataContainer&& Other) noexcept;
 	FParticleDataContainer& operator=(FParticleDataContainer&& Other) noexcept;
 
-	void Alloc(int32 InParticleDataNumBytes, int32 InParticleIndicesNumShorts);
+	void Alloc(int32 InParticleDataNumBytes, int32 InParticleIndicesNum);
 	void Free();
 
 	bool IsValid() const
@@ -380,7 +380,7 @@ struct FParticleDataContainer
     float DeltaTime = Context.DeltaTime;                                       \
     uint8* ParticleData = Context.Owner.ParticleData;                          \
     const uint32 ParticleStride = static_cast<uint32>(Context.Owner.ParticleStride); \
-    uint16* ParticleIndices = Context.Owner.ParticleIndices;                   \
+    uint32* ParticleIndices = Context.Owner.ParticleIndices;                   \
     for (int32 i = ActiveParticles - 1; i >= 0; --i)                           \
     {                                                                         \
         if (Context.bUpdateLoopPrefetch && i > 0)                              \

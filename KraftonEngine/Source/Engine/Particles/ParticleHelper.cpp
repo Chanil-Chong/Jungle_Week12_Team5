@@ -13,13 +13,13 @@ FParticleDataContainer::FParticleDataContainer(FParticleDataContainer&& Other) n
 {
     MemBlockSize = Other.MemBlockSize;
     ParticleDataNumBytes = Other.ParticleDataNumBytes;
-    ParticleIndicesNumShorts = Other.ParticleIndicesNumShorts;
+    ParticleIndicesNum = Other.ParticleIndicesNum;
     ParticleData = Other.ParticleData;
     ParticleIndices = Other.ParticleIndices;
 
     Other.MemBlockSize = 0;
     Other.ParticleDataNumBytes = 0;
-    Other.ParticleIndicesNumShorts = 0;
+    Other.ParticleIndicesNum = 0;
     Other.ParticleData = nullptr;
     Other.ParticleIndices = nullptr;
 }
@@ -35,34 +35,34 @@ FParticleDataContainer& FParticleDataContainer::operator=(FParticleDataContainer
 
     MemBlockSize = Other.MemBlockSize;
     ParticleDataNumBytes = Other.ParticleDataNumBytes;
-    ParticleIndicesNumShorts = Other.ParticleIndicesNumShorts;
+    ParticleIndicesNum = Other.ParticleIndicesNum;
     ParticleData = Other.ParticleData;
     ParticleIndices = Other.ParticleIndices;
 
     Other.MemBlockSize = 0;
     Other.ParticleDataNumBytes = 0;
-    Other.ParticleIndicesNumShorts = 0;
+    Other.ParticleIndicesNum = 0;
     Other.ParticleData = nullptr;
     Other.ParticleIndices = nullptr;
 
     return *this;
 }
 
-void FParticleDataContainer::Alloc(int32 InParticleDataNumBytes, int32 InParticleIndicesNumShorts)
+void FParticleDataContainer::Alloc(int32 InParticleDataNumBytes, int32 InParticleIndicesNum)
 {
     Free();
 
     assert(InParticleDataNumBytes >= 0);
-    assert(InParticleIndicesNumShorts >= 0);
+    assert(InParticleIndicesNum >= 0);
 
     ParticleDataNumBytes =
         static_cast<int32>(ParticleMemory::AlignSize(static_cast<size_t>(InParticleDataNumBytes)));
 
-    ParticleIndicesNumShorts = InParticleIndicesNumShorts;
+    ParticleIndicesNum = InParticleIndicesNum;
 
     MemBlockSize =
         ParticleDataNumBytes +
-        ParticleIndicesNumShorts * static_cast<int32>(sizeof(uint16));
+        ParticleIndicesNum * static_cast<int32>(sizeof(uint32));
 
     if (MemBlockSize <= 0)
     {
@@ -77,7 +77,7 @@ void FParticleDataContainer::Alloc(int32 InParticleDataNumBytes, int32 InParticl
     std::memset(ParticleData, 0, static_cast<size_t>(MemBlockSize));
 
     ParticleIndices =
-        reinterpret_cast<uint16*>(ParticleData + ParticleDataNumBytes);
+        reinterpret_cast<uint32*>(ParticleData + ParticleDataNumBytes);
 }
 
 void FParticleDataContainer::Free()
@@ -86,7 +86,7 @@ void FParticleDataContainer::Free()
     {
         MemBlockSize = 0;
         ParticleDataNumBytes = 0;
-        ParticleIndicesNumShorts = 0;
+        ParticleIndicesNum = 0;
         ParticleIndices = nullptr;
         return;
     }
@@ -95,7 +95,7 @@ void FParticleDataContainer::Free()
 
     MemBlockSize = 0;
     ParticleDataNumBytes = 0;
-    ParticleIndicesNumShorts = 0;
+    ParticleIndicesNum = 0;
     ParticleData = nullptr;
     ParticleIndices = nullptr;
 }

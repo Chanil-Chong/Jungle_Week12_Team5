@@ -306,9 +306,17 @@ void FOverlayStatSystem::BuildParticleLines(TArray<FString>& OutLines) const
 
 	OutLines.push_back(FString("--- Particle ---"));
 
-	const uint32 TotalParticles = FParticleStats::SpriteParticleCount + FParticleStats::MeshParticleCount;
-	snprintf(Buffer, sizeof(Buffer), "Active Particles : %u  (Sprite: %u  Mesh: %u)",
-		TotalParticles, FParticleStats::SpriteParticleCount, FParticleStats::MeshParticleCount);
+	const uint32 TotalParticles =
+		FParticleStats::SpriteParticleCount +
+		FParticleStats::MeshParticleCount +
+		FParticleStats::BeamParticleCount +
+		FParticleStats::RibbonParticleCount;
+	snprintf(Buffer, sizeof(Buffer), "Active Particles : %u  (Sprite: %u  Mesh: %u  Beam: %u  Ribbon: %u)",
+		TotalParticles,
+		FParticleStats::SpriteParticleCount,
+		FParticleStats::MeshParticleCount,
+		FParticleStats::BeamParticleCount,
+		FParticleStats::RibbonParticleCount);
 	OutLines.push_back(FString(Buffer));
 
 	snprintf(Buffer, sizeof(Buffer), "Draw Calls : %u", FParticleStats::DrawCallCount);

@@ -271,6 +271,11 @@ void FParticleSystemSceneProxy::FillStagingBuffer(
 	if (Source.eEmitterType == EDynamicEmitterType::Beam
 	 || Source.eEmitterType == EDynamicEmitterType::Ribbon)
 	{
+		if (Source.eEmitterType == EDynamicEmitterType::Beam)
+			PARTICLE_STATS_ADD_BEAM_PARTICLES(static_cast<uint32>(Source.ActiveParticleCount));
+		else
+			PARTICLE_STATS_ADD_RIBBON_PARTICLES(static_cast<uint32>(Source.ActiveParticleCount));
+
 		const TArray<FParticleBeamTrailVertex>* BuiltVertices = nullptr;
 		const TArray<uint32>* BuiltIndices = nullptr;
 

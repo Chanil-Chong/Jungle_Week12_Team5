@@ -77,7 +77,7 @@ struct FParticleEmitterInstance
     int32 SortMode = 0;
 
     uint8* ParticleData = nullptr;
-    uint16* ParticleIndices = nullptr;
+    uint32* ParticleIndices = nullptr;
     uint8* InstanceData = nullptr;
 
     int32 InstancePayloadSize = 0;
